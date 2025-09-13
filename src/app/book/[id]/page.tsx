@@ -1,4 +1,3 @@
-// src/app/book/[id]/page.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,6 +13,7 @@ export default function BookDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [addedToCart, setAddedToCart] = useState(false); // New state
 
   const params = useParams();
   const router = useRouter();
@@ -24,7 +24,6 @@ export default function BookDetailPage() {
       const foundBook = books.find((b) => b.id === id);
       if (foundBook) {
         setBook(foundBook);
-        // Get reviews for this book
         const bookReviewsData = reviews.filter((review) => review.bookId === id);
         setBookReviews(bookReviewsData);
       } else {
@@ -44,46 +43,39 @@ export default function BookDetailPage() {
       addedAt: new Date().toISOString(),
     };
 
-    // Retrieve existing cart from localStorage
     const storedCart = localStorage.getItem('cart');
     const cart: CartItem[] = storedCart ? JSON.parse(storedCart) : [];
 
-    // Check if the book is already in the cart
     const existingItemIndex = cart.findIndex((item) => item.bookId === book.id);
-
     if (existingItemIndex > -1) {
-      // Update quantity if item already exists
       cart[existingItemIndex].quantity += quantity;
     } else {
-      // Add new item to cart
       cart.push(cartItem);
     }
 
-    // Save updated cart to localStorage
     localStorage.setItem('cart', JSON.stringify(cart));
-
-    // Dispatch a custom event to notify the Navbar
     window.dispatchEvent(new CustomEvent('cartUpdated'));
 
-    // Redirect to the cart page after adding
-    router.push('/cart');
+    setAddedToCart(true);
+    setTimeout(() => {
+      setAddedToCart(false);
+      router.push('/cart');
+    }, 1500); 
   };
-  
+
   const renderStars = (rating: number) => {
     const stars = [];
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
-    
+
     for (let i = 1; i <= 5; i++) {
       if (i <= fullStars) {
-        // Full star
         stars.push(
           <svg key={i} className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
           </svg>
         );
       } else if (i === fullStars + 1 && hasHalfStar) {
-        // Half star
         stars.push(
           <div key={i} className="relative w-4 h-4">
             <svg className="w-4 h-4 text-gray-300 fill-current absolute" viewBox="0 0 20 20">
@@ -97,7 +89,6 @@ export default function BookDetailPage() {
           </div>
         );
       } else {
-        // Empty star
         stars.push(
           <svg key={i} className="w-4 h-4 text-gray-300 fill-current" viewBox="0 0 20 20">
             <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -110,11 +101,7 @@ export default function BookDetailPage() {
 
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
   if (isLoading) {
@@ -125,23 +112,20 @@ export default function BookDetailPage() {
     return (
       <div className="text-center py-10">
         <h1 className="text-2xl font-bold text-red-500">{error}</h1>
-        <Link href="/" className="text-blue-500 hover:underline mt-4 inline-block cursor-pointer">
+        <Link href="/" className="text-purple-500 hover:underline mt-4 inline-block cursor-pointer">
           Back to Home
         </Link>
       </div>
     );
   }
 
-  if (!book) {
-    return null; // Should be handled by error state
-  }
+  if (!book) return null;
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Book Image */}
         <div className="relative h-96 md:h-[600px] w-full shadow-lg rounded-lg overflow-hidden bg-gray-200 flex items-center justify-center">
-          {/* Book Icon Placeholder */}
           <div className="text-8xl text-gray-400">📚</div>
         </div>
 
@@ -165,7 +149,7 @@ export default function BookDetailPage() {
             ))}
           </div>
 
-          <div className="text-3xl font-bold text-blue-600 mb-6">${book.price.toFixed(2)}</div>
+          <div className="text-3xl font-bold text-purple-600 mb-6">${book.price.toFixed(2)}</div>
 
           <div className="flex items-center space-x-4 mb-6">
             <label htmlFor="quantity" className="font-semibold">Quantity:</label>
@@ -175,18 +159,22 @@ export default function BookDetailPage() {
               min="1"
               value={quantity}
               onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value, 10) || 1))}
-              className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-20 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
 
           <button 
             onClick={handleAddToCart}
-            className="w-full bg-blue-500 text-white py-3 rounded-md hover:bg-blue-600 transition-colors duration-300 text-lg font-semibold cursor-pointer"
+            className="w-full bg-purple-500 text-white py-3 rounded-md hover:bg-purple-600 transition-colors duration-300 text-lg font-semibold cursor-pointer"
           >
             Add to Cart
           </button>
 
-          <Link href="/" className="text-blue-500 hover:underline mt-6 text-center cursor-pointer">
+          {addedToCart && (
+            <p className="text-green-600 font-medium mt-2 text-center">Added to cart!</p>
+          )}
+
+          <Link href="/" className="text-purple-500 hover:underline mt-6 text-center cursor-pointer">
             &larr; Back to Home
           </Link>
         </div>
@@ -202,9 +190,7 @@ export default function BookDetailPage() {
               <div key={review.id} className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-3">
-                    <div className="flex items-center">
-                      {renderStars(review.rating)}
-                    </div>
+                    {renderStars(review.rating)}
                     <span className="text-sm text-gray-500">•</span>
                     <span className="text-sm text-gray-600">{formatDate(review.timestamp)}</span>
                     {review.verified && (
@@ -220,10 +206,7 @@ export default function BookDetailPage() {
                 
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">{review.title}</h3>
                 <p className="text-gray-700 mb-3 leading-relaxed">{review.comment}</p>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">by {review.author}</span>
-                </div>
+                <span className="text-sm font-medium text-gray-600">by {review.author}</span>
               </div>
             ))}
           </div>
