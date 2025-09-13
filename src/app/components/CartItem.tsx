@@ -18,7 +18,7 @@ const CartItem: React.FC<CartItemProps> = ({ item, onUpdateQuantity, onRemoveIte
   const subtotal = (book.price * quantity).toFixed(2);
 
   return (
-    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+    <div className="flex items-center justify-between p-4 border-b border-gray-200 hover:shadow-sm hover:bg-gray-50 transition-shadow transition-colors duration-200 rounded-md">
       <div className="flex items-center space-x-4">
         <div className="relative h-24 w-16 bg-gray-200 flex items-center justify-center rounded-md">
           {/* Book Icon Placeholder */}
